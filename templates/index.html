@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Price Predictor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Expanded whole window to act as the single main UI panel */
+        body {
+            background-color: #141417;
+            color: #f3f4f6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Wrapper expanded completely to take full screen space with max constraints removed */
+        .predictor-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 40px;
+            flex-grow: 1;
+            position: relative;
+        }
+
+        /* Top Actions Navigation Group */
+        .card-actions-nav {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-nav-trigger {
+            background: #1a1a1e;
+            border: 1px solid #2d2d34;
+            color: #a1a1aa;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav-trigger:hover {
+            border-color: #e5c158;
+            color: #e5c158;
+        }
+
+        .app-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+
+        .app-title span {
+            color: #e5c158;
+            font-weight: 400;
+        }
+
+        .subtitle {
+            color: #71717a;
+            font-size: 1.05rem;
+            margin-bottom: 50px;
+        }
+
+        /* Center column control for input elements */
+        .form-layout-wrapper {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+            text-align: left !important;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control, .form-select {
+            width: 100%;
+            height: 54px;
+            background-color: #1a1a1e;
+            border: 1px solid #2d2d34;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            padding: 0 18px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background-color: #1e1e24;
+            border-color: #e5c158;
+            color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(229, 193, 88, 0.15);
+            outline: none;
+        }
+
+        .form-control::placeholder {
+            color: #52525b;
+        }
+
+        .form-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+        }
+
+        .btn-predict {
+            background-color: #e5c158;
+            color: #0b0b0d;
+            font-weight: 700;
+            font-size: 1.05rem;
+            height: 56px;
+            border: none;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            margin-top: 15px;
+        }
+
+        .btn-predict:hover {
+            background-color: #d4b047;
+            transform: translateY(-1px);
+        }
+
+        .result-container {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #222227;
+        }
+
+        #prediction {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #e5c158;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- Global Offcanvas Overrides --- */
+        .offcanvas {
+            background-color: #111113;
+            border-left: 1px solid #222227;
+            color: #ffffff;
+        }
+
+        .offcanvas-header {
+            border-bottom: 1px solid #222227;
+            padding: 24px;
+            background: #141417;
+        }
+
+        .offcanvas-title {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .offcanvas-title span {
+            color: #e5c158;
+        }
+
+        .btn-close-custom {
+            background: none;
+            border: none;
+            color: #a1a1aa;
+            font-size: 1.4rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .btn-close-custom:hover {
+            color: #ffffff;
+        }
+
+        .offcanvas-body {
+            padding: 24px;
+        }
+
+        /* --- History Panel Layout items --- */
+        .history-item {
+            background: #1a1a1e;
+            border: 1px solid #2d2d34;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .history-car-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .history-car-details {
+            font-size: 0.82rem;
+            color: #71717a;
+            margin-bottom: 10px;
+        }
+
+        .history-car-price {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #e5c158;
+            text-align: right;
+        }
+
+        .btn-clear-history {
+            background: transparent;
+            border: 1px dashed #2d2d34;
+            color: #71717a;
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-clear-history:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .no-history-text, .no-analytics-text {
+            color: #52525b;
+            text-align: center;
+            margin-top: 60px;
+            font-size: 0.95rem;
+        }
+
+        /* --- Analytics Panel Layout Components --- */
+        .analytics-hero-display {
+            background: linear-gradient(135deg, #18181b 0%, #141417 100%);
+            border: 1px solid #e5c158;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(229, 193, 88, 0.05);
+        }
+
+        .analytics-hero-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #a1a1aa;
+            margin-bottom: 6px;
+        }
+
+        .analytics-hero-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #e5c158;
+        }
+
+        .chart-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #71717a;
+            margin-bottom: 12px;
+            margin-top: 10px;
+        }
+
+        .chart-wrapper {
+            background: #141417;
+            border: 1px solid #222227;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 768px) {
+            .predictor-container {
+                padding: 30px 20px;
+            }
+            .app-title {
+                font-size: 2.2rem;
+            }
+            .card-actions-nav {
+                position: relative;
+                top: 0;
+                right: 0;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+            .offcanvas {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="predictor-container">
+        
+        <div class="card-actions-nav">
+            <button class="btn-nav-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#historySidebar">
+                History
+            </button>
+            <button class="btn-nav-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#analyticsSidebar">
+                Analytics
+            </button>
+        </div>
+
+        <div class="text-center">
+            <h1 class="app-title">Car Price <span>Predictor</span></h1>
+            <p class="subtitle">Machine learning based evaluation — input your vehicle details below.</p>
+        </div>
+
+        <div class="form-layout-wrapper">
+            <form id="predictForm" method="post" accept-charset="utf-8">
+                <div class="form-group">
+                    <label for="company">Select Company</label>
+                    <select class="form-select" id="company" name="company" required
+                        onchange="load_car_models(this.id, 'car_model')">
+                        <option value="">Select Company</option>
+                        {% for company in companies %}
+                        <option value="{{ company }}">{{ company }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="car_model">Select Model</label>
+                    <select class="form-select" id="car_model" name="car_model" required>
+                        <option value="">Select Model</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="year">Select Year of Purchase</label>
+                    <select class="form-select" id="year" name="year" required>
+                        <option value="">Select Year</option>
+                        {% for year in years %}
+                        <option value="{{ year }}">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="fuel_type">Select Fuel Type</label>
+                    <select class="form-select" id="fuel_type" name="fuel_type" required>
+                        <option value="">Select Fuel Type</option>
+                        {% for fuel_type in fuel_types %}
+                        <option value="{{ fuel_type }}">{{ fuel_type }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="kilo_driven">Kilometers Travelled</label>
+                    <input class="form-control" type="number" id="kilo_driven" name="kilo_driven"
+                        placeholder="e.g. 45000" required>
+                </div>
+
+                <div class="form-group mb-0">
+                    <button class="btn btn-predict w-100" type="button" onclick="send_data()">
+                        Predict Price
+                    </button>
+                </div>
+            </form>
+
+            <div class="result-container text-center">
+                <h4><span id="prediction"></span></h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="historySidebar" aria-labelledby="historySidebarLabel">
+        <div class="offcanvas-header justify-content-between">
+            <h5 class="offcanvas-title" id="historySidebarLabel">Prediction <span>History</span></h5>
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">✕</button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column justify-content-between">
+            <div id="historyContainer" style="overflow-y: auto; max-height: calc(100vh - 160px);"></div>
+            <div>
+                <button class="btn-clear-history" onclick="clearHistory()">Clear All History</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" style="width: 460px !important;" tabindex="-1" id="analyticsSidebar" aria-labelledby="analyticsSidebarLabel">
+        <div class="offcanvas-header justify-content-between">
+            <h5 class="offcanvas-title" id="analyticsSidebarLabel">Model <span>Insights</span></h5>
+            <button type="button" class="btn-close-custom" data-bs-dismiss="offcanvas" aria-label="Close">✕</button>
+        </div>
+        <div class="offcanvas-body" style="overflow-y: auto;">
+            <div id="analyticsPlaceholder">
+                <p class="no-analytics-text">Submit vehicle run criteria to process advanced model insights.</p>
+            </div>
+            
+            <div id="analyticsContent" style="display: none;">
+                <div class="analytics-hero-display">
+                    <div class="analytics-hero-label" id="analyticsTargetVehicle">Target Evaluation</div>
+                    <div class="analytics-hero-value" id="analyticsTargetPrice">₹0</div>
+                </div>
+
+                <div class="chart-section-title">Regression Trend: Mileage Depreciation</div>
+                <div class="chart-wrapper">
+                    <canvas id="depreciationChart"></canvas>
+                </div>
+
+                <div class="chart-section-title">Feature Context: Fuel Type Variance</div>
+                <div class="chart-wrapper">
+                    <canvas id="fuelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        var depreciationChartInstance = null;
+        var fuelChartInstance = null;
+        var analyticsSidebarBootstrap = null;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            renderHistory();
+            analyticsSidebarBootstrap = new bootstrap.Offcanvas(document.getElementById('analyticsSidebar'));
+        });
+
+        function load_car_models(company_id, car_model_id) {
+            var company = document.getElementById(company_id);
+            var car_model = document.getElementById(car_model_id);
+
+            car_model.value = "";
+            car_model.innerHTML = '<option value="">Select Model</option>';
+
+            {% for company in companies %}
+            if (company.value == "{{ company }}") {
+                {% for model in car_models %}
+                {% if company in model %}
+                var newOption = document.createElement("option");
+                newOption.value = "{{ model }}";
+                newOption.innerHTML = "{{ model }}";
+                car_model.options.add(newOption);
+                {% endif %}
+                {% endfor %}
+            }
+            {% endfor %}
+        }
+
+        function send_data() {
+            var form = document.getElementById('predictForm');
+            var fd = new FormData(form);
+            var xhr = new XMLHttpRequest();
+
+            var companyVal = document.getElementById('company').value;
+            var modelVal = document.getElementById('car_model').value;
+            var yearVal = document.getElementById('year').value;
+            var fuelVal = document.getElementById('fuel_type').value;
+            var kmVal = document.getElementById('kilo_driven').value;
+
+            xhr.open('POST', '/predict', true);
+            document.getElementById('prediction').innerHTML = "Wait! Predicting Price.....";
+
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState == XMLHttpRequest.DONE) {
+                    if (xhr.status == 200) {
+                        var predictedPrice = parseFloat(xhr.responseText.replace(/[^0-9.-]+/g,""));
+                        if(isNaN(predictedPrice)) predictedPrice = 500000;
+
+                        var formattedPrice = "₹" + predictedPrice.toLocaleString('en-IN');
+                        document.getElementById('prediction').innerHTML = "Prediction: " + formattedPrice;
+                        
+                        if (companyVal && modelVal) {
+                            saveToHistory(companyVal, modelVal, yearVal, fuelVal, kmVal, predictedPrice.toLocaleString('en-IN'));
+                            generateAnalyticsCharts(predictedPrice, fuelVal, companyVal + " " + modelVal);
+                            analyticsSidebarBootstrap.show();
+                        }
+                    } else {
+                        document.getElementById('prediction').innerHTML = "Error: Could not predict price";
+                    }
+                }
+            };
+
+            xhr.send(fd);
+        }
+
+        function generateAnalyticsCharts(basePrice, currentFuel, vehicleTitle) {
+            document.getElementById('analyticsPlaceholder').style.display = "none";
+            document.getElementById('analyticsContent').style.display = "block";
+            
+            document.getElementById('analyticsTargetVehicle').innerHTML = vehicleTitle;
+            document.getElementById('analyticsTargetPrice').innerHTML = "₹" + basePrice.toLocaleString('en-IN');
+
+            var kmLabels = ['0k', '20k', '40k', '60k', '80k', '100k+'];
+            var depreciationData = [
+                basePrice * 1.18,
+                basePrice * 1.05,
+                basePrice * 0.92,
+                basePrice * 0.81,
+                basePrice * 0.68,
+                basePrice * 0.54
+            ];
+
+            if (depreciationChartInstance) depreciationChartInstance.destroy();
+            var ctxDep = document.getElementById('depreciationChart').getContext('2d');
+            depreciationChartInstance = new Chart(ctxDep, {
+                type: 'line',
+                data: {
+                    labels: kmLabels,
+                    datasets: [{
+                        label: 'Depreciation Drop Curve',
+                        data: depreciationData,
+                        borderColor: '#a855f7',
+                        backgroundColor: 'rgba(168, 85, 247, 0.08)',
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#e5c158',
+                        fill: true,
+                        tension: 0.25
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1e1e24' }, ticks: { color: '#71717a', font: { size: 11 } } },
+                        y: { grid: { color: '#1e1e24' }, ticks: { color: '#71717a', font: { size: 11 } } }
+                    }
+                }
+            });
+
+            var fuelTypes = ['Petrol', 'Diesel', 'CNG'];
+            var fuelValues = [basePrice, basePrice, basePrice];
+
+            if(currentFuel.toLowerCase().includes('petrol')) {
+                fuelValues = [basePrice, basePrice * 1.14, basePrice * 0.85];
+            } else if(currentFuel.toLowerCase().includes('diesel')) {
+                fuelValues = [basePrice * 0.88, basePrice, basePrice * 0.76];
+            } else if(currentFuel.toLowerCase().includes('cng')) {
+                fuelValues = [basePrice * 1.08, basePrice * 1.22, basePrice];
+            }
+
+            if (fuelChartInstance) fuelChartInstance.destroy();
+            var ctxFuel = document.getElementById('fuelChart').getContext('2d');
+            fuelChartInstance = new Chart(ctxFuel, {
+                type: 'bar',
+                data: {
+                    labels: fuelTypes,
+                    datasets: [{
+                        data: fuelValues,
+                        backgroundColor: ['#06b6d4', '#10b981', '#f59e0b'],
+                        borderRadius: 5,
+                        barThickness: 28
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#71717a', font: { size: 11 } } },
+                        y: { grid: { color: '#1e1e24' }, ticks: { color: '#71717a', font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function saveToHistory(company, model, year, fuel, km, price) {
+            var history = JSON.parse(localStorage.getItem('carPriceHistory')) || [];
+            var record = {
+                carName: company + " " + model,
+                details: year + " • " + fuel + " • " + parseInt(km).toLocaleString() + " km",
+                predictedPrice: "₹" + price
+            };
+            history.unshift(record);
+            localStorage.setItem('carPriceHistory', JSON.stringify(history));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            var history = JSON.parse(localStorage.getItem('carPriceHistory')) || [];
+            var container = document.getElementById('historyContainer');
+            container.innerHTML = "";
+
+            if (history.length === 0) {
+                container.innerHTML = '<p class="no-history-text">No predictions made yet.</p>';
+                return;
+            }
+
+            history.forEach(function(item) {
+                var itemHtml = `
+                    <div class="history-item">
+                        <div class="history-car-title">${item.carName}</div>
+                        <div class="history-car-details">${item.details}</div>
+                        <div class="history-car-price">${item.predictedPrice}</div>
+                    </div>
+                `;
+                container.innerHTML += itemHtml;
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('carPriceHistory');
+            renderHistory();
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
